@@ -452,6 +452,48 @@
         .toggle-link { font-size: 0.9em; color: var(--cor-texto-leve); cursor: pointer; }
         .toggle-link a { color: var(--cor-azul); text-decoration: none; }
         .toggle-link a:hover { text-decoration: underline; }
+
+        /* Aprimoramentos para tela de login */
+        .auth-form {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .auth-form.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper input {
+            padding-right: 40px;
+        }
+        .password-wrapper .eye-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--cor-texto-leve);
+            transition: color 0.3s;
+        }
+        .password-wrapper .eye-icon:hover {
+            color: var(--cor-texto);
+        }
+        .form-grupo.invalid input {
+            border-color: var(--cor-vermelho);
+            box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.2);
+        }
+        .form-grupo.invalid label {
+            color: var(--cor-vermelho);
+        }
+        .error-message {
+            color: var(--cor-vermelho);
+            font-size: 0.85em;
+            margin-top: 4px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -465,16 +507,16 @@
                 <h2 id="auth-title">Bem-vindo!</h2>
                 <p id="auth-subtitle" class="subtitle">Acesse o seu dashboard financeiro.</p>
                 
-                <form id="form-login" style="display: block;">
-                    <div class="form-grupo"><label for="login-email">Email</label><input type="email" id="login-email" required autocomplete="email" placeholder="seu@email.com"></div>
-                    <div class="form-grupo"><label for="login-password">Senha</label><input type="password" id="login-password" required autocomplete="current-password" placeholder="********"></div>
+                <form id="form-login" class="auth-form visible" style="display: block;">
+                    <div class="form-grupo"><label for="login-email">Email</label><input type="email" id="login-email" required autocomplete="email" placeholder="seu@email.com"><span class="error-message">Email inválido.</span></div>
+                    <div class="form-grupo password-wrapper"><label for="login-password">Senha</label><input type="password" id="login-password" required autocomplete="current-password" placeholder="********"><i class="eye-icon fa-solid fa-eye-slash" onclick="togglePassword('login-password', this)"></i><span class="error-message">Senha deve ter pelo menos 6 caracteres.</span></div>
                     <div class="form-botoes" style="margin-top:20px;"><button type="submit" class="btn btn-azul" style="width: 100%;">Entrar</button></div>
                     <div class="toggle-link" style="margin-top:20px;">Não tem uma conta? <a id="toggle-to-signup">Cadastre-se</a></div>
                 </form>
 
-                <form id="form-signup" style="display: none;">
-                    <div class="form-grupo"><label for="signup-email">Email</label><input type="email" id="signup-email" required autocomplete="email" placeholder="seu@email.com"></div>
-                    <div class="form-grupo"><label for="signup-password">Senha</label><input type="password" id="signup-password" required autocomplete="new-password" placeholder="********"></div>
+                <form id="form-signup" class="auth-form" style="display: none;">
+                    <div class="form-grupo"><label for="signup-email">Email</label><input type="email" id="signup-email" required autocomplete="email" placeholder="seu@email.com"><span class="error-message">Email inválido.</span></div>
+                    <div class="form-grupo password-wrapper"><label for="signup-password">Senha</label><input type="password" id="signup-password" required autocomplete="new-password" placeholder="********"><i class="eye-icon fa-solid fa-eye-slash" onclick="togglePassword('signup-password', this)"></i><span class="error-message">Senha deve ter pelo menos 6 caracteres.</span></div>
                     <div class="form-botoes" style="margin-top:20px;"><button type="submit" class="btn btn-azul" style="width: 100%;">Criar Conta</button></div>
                     <div class="toggle-link" style="margin-top:20px;">Já tem uma conta? <a id="toggle-to-login">Entrar</a></div>
                 </form>
@@ -568,11 +610,70 @@
         const formLogin = document.getElementById('form-login');
         const formSignup = document.getElementById('form-signup');
 
-        document.getElementById('toggle-to-signup').addEventListener('click', () => { formLogin.style.display = 'none'; formSignup.style.display = 'block'; document.getElementById('auth-title').textContent = 'Crie a sua Conta'; document.getElementById('auth-subtitle').textContent = 'Comece a organizar as suas finanças.'; });
-        document.getElementById('toggle-to-login').addEventListener('click', () => { formSignup.style.display = 'none'; formLogin.style.display = 'block'; document.getElementById('auth-title').textContent = 'Bem-vindo!'; document.getElementById('auth-subtitle').textContent = 'Acesse o seu dashboard financeiro.'; });
+        // Função para alternar visibilidade de senha
+        window.togglePassword = function(id, icon) {
+            const input = document.getElementById(id);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            }
+        };
+
+        // Validação no frontend
+        function validateForm(form) {
+            let valid = true;
+            const grupos = form.querySelectorAll('.form-grupo');
+            grupos.forEach(grupo => {
+                const input = grupo.querySelector('input');
+                const error = grupo.querySelector('.error-message');
+                if (input.type === 'email') {
+                    if (!input.value.match(/^\S+@\S+\.\S+$/)) {
+                        grupo.classList.add('invalid');
+                        error.style.display = 'block';
+                        valid = false;
+                    } else {
+                        grupo.classList.remove('invalid');
+                        error.style.display = 'none';
+                    }
+                } else if (input.type === 'password') {
+                    if (input.value.length < 6) {
+                        grupo.classList.add('invalid');
+                        error.style.display = 'block';
+                        valid = false;
+                    } else {
+                        grupo.classList.remove('invalid');
+                        error.style.display = 'none';
+                    }
+                }
+            });
+            return valid;
+        }
+
+        // Transição suave entre formulários
+        function toggleForms(toShow, toHide, title, subtitle) {
+            toShow.classList.add('visible');
+            toHide.classList.remove('visible');
+            setTimeout(() => {
+                toHide.style.display = 'none';
+                toShow.style.display = 'block';
+            }, 500);
+            document.getElementById('auth-title').textContent = title;
+            document.getElementById('auth-subtitle').textContent = subtitle;
+        }
+
+        document.getElementById('toggle-to-signup').addEventListener('click', () => { 
+            toggleForms(formSignup, formLogin, 'Crie a sua Conta', 'Comece a organizar as suas finanças.');
+        });
+        document.getElementById('toggle-to-login').addEventListener('click', () => { 
+            toggleForms(formLogin, formSignup, 'Bem-vindo!', 'Acesse o seu dashboard financeiro.');
+        });
 
         formSignup.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!validateForm(formSignup)) return;
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A criar...';
             const email = document.getElementById('signup-email').value;
@@ -596,6 +697,7 @@
 
         formLogin.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!validateForm(formLogin)) return;
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A entrar...';
             const email = document.getElementById('login-email').value;
